@@ -1,0 +1,17 @@
+name: simple-arithmetic
+description: Sanity-check task for custom YAML format. Adds three integers.
+scorer: number
+system_prompt: |
+  Add the three numbers and return only the final integer.
+  End with 'The answer is <number>'.
+samples:
+  - input: "What is 1 + 2 + 3?"
+    target: "6"
+  - input: "What is 10 + 20 + 30?"
+    target: "60"
+  - input: "What is 100 + 200 + 300?"
+    target: "600"
+  - input: "What is 7 + 14 + 21?"
+    target: "42"
+  - input: "What is 123 + 456 + 789?"
+    target: "1368"

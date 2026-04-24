@@ -215,6 +215,13 @@ Pure single-file HTML + vanilla JS — no React, no build step, works offline.
 
 Issues and PRs welcome. `pytest tests/` should stay green.
 
+## Related Projects
+
+- [**CodeJoust**](https://github.com/he-yufeng/CodeJoust) — LiteBench evaluates models on fixed benchmarks. CodeJoust evaluates **which coding agent CLI** solves *your own* bug best — it races Claude Code, aider, Codex in parallel git worktrees, auto-scores by tests/cost/diff/time, hands you the winner's patch. Sibling project, `pip install codejoust`.
+- [**CoreCoder**](https://github.com/he-yufeng/CoreCoder) — Claude Code's architecture distilled to ~1,400 lines of Python. Good for understanding how agents work under the hood.
+- [**AnyCoder**](https://github.com/he-yufeng/AnyCoder) — practical terminal AI coding agent with 100+ model support via litellm.
+- [**RepoWiki**](https://github.com/he-yufeng/RepoWiki) — `pip install repowiki` turns any repo into a wiki with dependency graph + architecture diagram + module pages.
+
 ## License
 
 MIT

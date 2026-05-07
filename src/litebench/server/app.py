@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -28,12 +29,14 @@ def _parse_iso(s: str) -> datetime:
 
 def create_app() -> FastAPI:
     ensure_dirs()
-    app = FastAPI(title="LiteBench", version="0.3.0")
     storage = Storage(DB_PATH)
 
-    @app.on_event("startup")
-    async def _init() -> None:
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
         await storage.init()
+        yield
+
+    app = FastAPI(title="LiteBench", version="0.3.0", lifespan=lifespan)
 
     @app.get("/", response_class=HTMLResponse)
     async def index() -> HTMLResponse:

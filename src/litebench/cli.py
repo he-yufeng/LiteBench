@@ -139,7 +139,10 @@ def run(
                 "results": [r.model_dump(mode="json") for r in results],
             }
             json_out.parent.mkdir(parents=True, exist_ok=True)
-            json_out.write_text(jsonlib.dumps(payload, indent=2, ensure_ascii=False))
+            json_out.write_text(
+                jsonlib.dumps(payload, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
             console.print(f"[dim]Per-sample results → {json_out}[/]")
 
     asyncio.run(_go())

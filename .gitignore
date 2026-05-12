@@ -6,6 +6,7 @@ build/
 .venv/
 .pytest_cache/
 .ruff_cache/
+.tmp/
 .litebench/
 *.sqlite
 *.sqlite-journal

@@ -8,7 +8,7 @@ from litebench.tasks.custom import CustomTask
 
 def _write_yaml(tmp_path: Path, data: dict) -> Path:
     path = tmp_path / "task.yaml"
-    path.write_text(yaml.safe_dump(data))
+    path.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
     return path
 
 
@@ -96,3 +96,25 @@ def test_n_limit(tmp_path):
     task = CustomTask(path)
     assert len(list(task.load_samples(n=2))) == 2
     assert len(list(task.load_samples())) == 5
+
+
+def test_custom_task_reads_utf8_jsonl(tmp_path: Path) -> None:
+    data_path = tmp_path / "samples.jsonl"
+    data_path.write_text(
+        '{"input": "你好，世界？", "target": "世界"}\n',
+        encoding="utf-8",
+    )
+    path = _write_yaml(
+        tmp_path,
+        {
+            "name": "中文任务",
+            "samples_jsonl": data_path.name,
+        },
+    )
+
+    task = CustomTask(path)
+    samples = list(task.load_samples())
+
+    assert task.name == "中文任务"
+    assert samples[0].input == "你好，世界？"
+    assert samples[0].target == "世界"

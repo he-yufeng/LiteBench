@@ -40,7 +40,7 @@ from litebench.tasks.base import Task
 class CustomTask(Task):
     def __init__(self, path: Path):
         self.path = Path(path)
-        spec = yaml.safe_load(self.path.read_text())
+        spec = yaml.safe_load(self.path.read_text(encoding="utf-8"))
         if not isinstance(spec, dict):
             raise ValueError(f"{path}: YAML root must be a mapping.")
         self.name = spec.get("name", self.path.stem)
@@ -59,7 +59,7 @@ class CustomTask(Task):
         elif "samples_jsonl" in spec:
             jsonl_path = (self.path.parent / spec["samples_jsonl"]).resolve()
             raw = []
-            for line in jsonl_path.read_text().splitlines():
+            for line in jsonl_path.read_text(encoding="utf-8").splitlines():
                 line = line.strip()
                 if line:
                     raw.append(json.loads(line))

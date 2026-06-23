@@ -1,12 +1,16 @@
-# LiteBench
+<div align="center">
 
-一个 `pip install` 就能用的 LLM / Agent 评测工具。5 分钟跑通第一次 benchmark。
+<img src="docs/banner.png" alt="LiteBench — LLM 与 Agent 的评测工具" width="100%">
 
 [![PyPI](https://img.shields.io/pypi/v/litebench.svg)](https://pypi.org/project/litebench/)
 [![Python](https://img.shields.io/pypi/pyversions/litebench.svg)](https://pypi.org/project/litebench/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[English](README.md)
+[**快速开始**](#用法) · [**内置任务**](#内置任务) · [**自定义任务**](#自定义任务) · [English](README.md)
+
+</div>
+
+<p align="center"><img src="docs/demo.png" alt="litebench run gsm8k" width="580"></p>
 
 ## 解决什么问题
 

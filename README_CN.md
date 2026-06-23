@@ -192,10 +192,14 @@ litebench serve
 
 ## 路线图
 
-- ✅ Phase 1 — MVP CLI、3 任务、SQLite 历史
-- ✅ Phase 2 — 6 任务、YAML 自定义、LLM judge、31 个回归单测
-- ✅ Phase 3 — Agent 模式 (litellm function calling 的 tool-use eval)、10 个新单测
-- ✅ Phase 4 — Web 面板 (`litebench serve`)、5 个新单测
+**已完成**：命令行、六个内置基准（HumanEval、GSM8K、MMLU、MATH-500，以及 YAML 自定义任务）、LLM-as-judge 模式、基于 litellm function calling 的 agent / 工具调用评测、SQLite 运行历史、`litebench serve` Web 面板，全部跑在一套始终保持全绿的回归单测下。
+
+**规划中**：
+
+- **pass@k 采样**：每道题跑 n 次，报告 pass@1 / pass@k，让模型的稳定性可见，而不只是「某一次恰好过了」。
+- **可续跑**：长基准跑到一半能存档续跑，被打断后不必把整轮重新付费跑一遍。
+- **更多内置任务**：从真实轨迹里整理一个代码修复任务和一个工具调用任务；runner 已经支持这两种形态，缺的只是经过整理的数据集。
+- **按成本比较**：用每次运行已经记录的 token 数据，按「每美元准确率」而不只是准确率给排行榜排序。
 
 ## 贡献
 

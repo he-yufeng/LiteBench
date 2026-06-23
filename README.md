@@ -220,10 +220,14 @@ Pure single-file HTML + vanilla JS — no React, no build step, works offline.
 
 ## Roadmap
 
-- ✅ Phase 1 — MVP CLI, 3 tasks, SQLite history
-- ✅ Phase 2 — 6 tasks, YAML custom, LLM judge, 31 regression tests
-- ✅ Phase 3 — Agent mode (tool-use eval via litellm function calling), 10 more tests
-- ✅ Phase 4 — Web dashboard (`litebench serve`), 5 more tests
+**Shipped:** the CLI, six built-in benchmarks (HumanEval, GSM8K, MMLU, MATH-500, plus YAML-defined custom tasks), an LLM-as-judge mode, agent/tool-use evaluation via litellm function calling, a SQLite run history, and a `litebench serve` web dashboard — all under a regression suite that stays green.
+
+**Planned:**
+
+- **A pass@k sampler** — run each task n times and report pass@1 / pass@k, so a model's reliability is visible, not just whether one sample happened to pass.
+- **Resumable runs** — checkpoint partway through a long benchmark and continue, instead of paying for the whole sweep again after an interruption.
+- **More built-in tasks** — a code-repair task and a tool-use task from real traces, since the runner already supports both shapes and only the curated dataset is missing.
+- **Cost-aware comparison** — sort the leaderboard by accuracy-per-dollar, not just accuracy, using the token data each run already records.
 
 ## Contributing
 

@@ -230,6 +230,12 @@ Issues and PRs welcome. `pytest tests/` should stay green.
 - [**AnyCoder**](https://github.com/he-yufeng/AnyCoder) — practical terminal AI coding agent with 100+ model support via litellm.
 - [**RepoWiki**](https://github.com/he-yufeng/RepoWiki) — `pip install repowiki` turns any repo into a wiki with dependency graph + architecture diagram + module pages.
 
+## Related projects
+
+- [AgentProbe](https://github.com/he-yufeng/AgentProbe) — a pytest plugin for regression-testing AI agents
+- [IssueBenchKit](https://github.com/he-yufeng/IssueBenchKit) — turn real GitHub issues into reproducible coding-agent benchmark tasks
+- [CodeJoust](https://github.com/he-yufeng/CodeJoust) — pit coding agents against the same bug and score the patches
+
 ## License
 
 MIT

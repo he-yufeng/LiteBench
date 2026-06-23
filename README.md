@@ -1,10 +1,16 @@
-# LiteBench
+<div align="center">
 
-A pip-installable benchmark runner for LLMs and agents. Five minutes to your first eval.
+<img src="docs/banner.png" alt="LiteBench — benchmark runner for LLMs and agents" width="100%">
 
 [![PyPI](https://img.shields.io/pypi/v/litebench.svg)](https://pypi.org/project/litebench/)
 [![Python](https://img.shields.io/pypi/pyversions/litebench.svg)](https://pypi.org/project/litebench/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+[**Quick Start**](#usage) · [**Built-in Tasks**](#built-in-tasks) · [**Custom Tasks**](#custom-tasks) · [中文](README_CN.md)
+
+</div>
+
+<p align="center"><img src="docs/demo.png" alt="litebench run gsm8k" width="580"></p>
 
 [中文文档](README_CN.md)
 

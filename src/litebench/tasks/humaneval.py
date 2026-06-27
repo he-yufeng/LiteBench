@@ -14,7 +14,7 @@ class HumanEvalTask(Task):
     description = "OpenAI HumanEval. Execute generated Python against hidden tests."
 
     def load_samples(self, n: int | None = None, split: str = "test") -> Iterable[Sample]:
-        ds = load_dataset("openai_humaneval", split=split, streaming=True)
+        ds = load_dataset("openai/openai_humaneval", split=split, streaming=True)
         taken = 0
         for row in ds:
             if n is not None and taken >= n:

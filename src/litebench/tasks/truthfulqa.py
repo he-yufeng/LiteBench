@@ -20,7 +20,9 @@ class TruthfulQATask(Task):
     def load_samples(self, n: int | None = None, split: str = "validation") -> Iterable[Sample]:
         # The MC config only ships a 'validation' split; users passing 'test' get folded back.
         actual_split = "validation" if split == "test" else split
-        ds = load_dataset("truthful_qa", "multiple_choice", split=actual_split, streaming=True)
+        ds = load_dataset(
+            "truthfulqa/truthful_qa", "multiple_choice", split=actual_split, streaming=True
+        )
         taken = 0
         for i, row in enumerate(ds):
             if n is not None and taken >= n:

@@ -172,6 +172,11 @@ async function renderRunDetail(runId) {
            <div class="mono" style="font-size:14px">${shortRun(s.run_id)}</div>
            <div class="muted" style="font-size:12px">${fmtTime(s.finished_at)}</div></div>
     </div>
+    <div>
+      <div class="label muted" style="font-size:11px;text-transform:uppercase">System Prompt</div>
+      <pre>${s.system_prompt}</pre>
+    </div>
+    <hr>
     <h3 style="margin:24px 0 8px">Samples</h3>`;
 
   const sampleHTML = samples.map(sp => {

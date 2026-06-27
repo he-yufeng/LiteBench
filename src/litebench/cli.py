@@ -56,6 +56,7 @@ def list_cmd() -> None:
 @click.option("--split", default="test", help="Dataset split (default: test).")
 @click.option("--json-out", type=click.Path(path_type=Path), default=None, help="Write per-sample JSON to this path.")
 @click.option("--no-save", is_flag=True, help="Don't persist the run to the local DB.")
+@click.option("--system-prompt", '-p', default=None, help="Override the task's system prompt.")
 def run(
     task_name: str,
     model: str,
@@ -68,6 +69,7 @@ def run(
     split: str,
     json_out: Path | None,
     no_save: bool,
+    system_prompt: str | None,
 ) -> None:
     """Run a benchmark. Example: litebench run gsm8k -m deepseek/deepseek-chat -n 50
 
@@ -122,7 +124,13 @@ def run(
                     correct += 1
                 progress.update(pid, completed=done, acc=f"{correct / done * 100:.1f}%")
 
-            runner = Runner(task=task, client=client, concurrency=concurrency, on_progress=on_progress)
+            runner = Runner(
+                task=task,
+                client=client,
+                concurrency=concurrency,
+                on_progress=on_progress,
+                system_prompt_override=system_prompt,
+            )
             summary, results = await runner.run(sample_list)
 
         if not no_save:

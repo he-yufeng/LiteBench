@@ -111,6 +111,7 @@ def _run_to_api(r: Any) -> dict[str, Any]:
         "run_id": r.run_id,
         "task": r.task,
         "model": r.model,
+        "system_prompt": r.system_prompt,
         "n_samples": r.n_samples,
         "n_correct": r.n_correct,
         "accuracy": r.accuracy,

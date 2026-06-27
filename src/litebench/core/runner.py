@@ -20,11 +20,13 @@ class Runner:
         client: LLMClient,
         concurrency: int = 8,
         on_progress=None,
+        system_prompt_override: str | None = None,
     ):
         self.task = task
         self.client = client
         self.concurrency = concurrency
         self.on_progress = on_progress
+        self.system_prompt_override = system_prompt_override
 
     async def run(self, samples: list[Sample]) -> tuple[RunSummary, list[SampleResult]]:
         started_at = datetime.now()
@@ -64,6 +66,7 @@ class Runner:
             run_id=str(uuid.uuid4()),
             task=self.task.name,
             model=self.client.model,
+            system_prompt=self._get_system_prompt(),
             n_samples=total,
             n_correct=n_correct,
             accuracy=accuracy,
@@ -86,7 +89,7 @@ class Runner:
 
         prompt = self.task.build_prompt(sample)
         messages: list[dict[str, Any]] = []
-        system = self.task.system_prompt()
+        system = self._get_system_prompt()
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
@@ -129,7 +132,7 @@ class Runner:
 
         prompt = task.build_prompt(sample)
         messages: list[dict[str, Any]] = []
-        system = task.system_prompt()
+        system = self._get_system_prompt()
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
@@ -239,3 +242,8 @@ class Runner:
                 steps=steps,
                 metadata={**sample.metadata, "stop_reason": "error"},
             )
+
+    def _get_system_prompt(self) -> str | None:
+        if self.system_prompt_override is None:
+            return self.task.system_prompt()
+        return self.system_prompt_override

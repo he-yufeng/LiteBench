@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS runs (
     run_id TEXT PRIMARY KEY,
     task TEXT NOT NULL,
     model TEXT NOT NULL,
+    system_prompt TEXT,
     n_samples INTEGER NOT NULL,
     n_correct INTEGER NOT NULL,
     accuracy REAL NOT NULL,
@@ -60,13 +61,14 @@ class Storage:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """INSERT OR REPLACE INTO runs
-                (run_id, task, model, n_samples, n_correct, accuracy, mean_latency_ms,
+                (run_id, task, model, system_prompt, n_samples, n_correct, accuracy, mean_latency_ms,
                  total_prompt_tokens, total_completion_tokens, started_at, finished_at, config)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     summary.run_id,
                     summary.task,
                     summary.model,
+                    summary.system_prompt,
                     summary.n_samples,
                     summary.n_correct,
                     summary.accuracy,
@@ -152,6 +154,7 @@ class Storage:
             run_id=row["run_id"],
             task=row["task"],
             model=row["model"],
+            system_prompt=row["system_prompt"],
             n_samples=row["n_samples"],
             n_correct=row["n_correct"],
             accuracy=row["accuracy"],

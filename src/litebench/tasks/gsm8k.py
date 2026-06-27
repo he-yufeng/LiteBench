@@ -21,7 +21,7 @@ class GSM8KTask(Task):
     description = "Grade school math word problems. Final-answer exact match."
 
     def load_samples(self, n: int | None = None, split: str = "test") -> Iterable[Sample]:
-        ds = load_dataset("gsm8k", "main", split=split, streaming=True)
+        ds = load_dataset("openai/gsm8k", "main", split=split, streaming=True)
         taken = 0
         for i, row in enumerate(ds):
             if n is not None and taken >= n:

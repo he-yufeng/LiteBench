@@ -29,6 +29,7 @@ pip install litebench
 
 litebench list
 litebench run gsm8k -m deepseek/deepseek-chat -n 50
+litebench run gsm8k -m openrouter/qwen/qwen3-235b-a22b-thinking-2507 --system-prompt "Give only the final answer. No explanation. No steps. One line." -n 50
 litebench run humaneval -m gpt-5 -n 20
 litebench run mmlu -m claude-sonnet-4-6 --subject computer_security -n 100
 litebench run math -m kimi -n 50

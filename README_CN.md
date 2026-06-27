@@ -205,6 +205,15 @@ litebench serve
 
 欢迎 Issue / PR。`pytest tests/` 必须全绿。
 
+## 相关项目
+
+LiteBench 是我评测和观测 LLM 系统的一环，下面是几个相关工具：
+
+- **[CoreCoder](https://github.com/he-yufeng/CoreCoder)** — 想搞懂一个 coding agent 到底怎么运作？把整套约 1000 行引擎从头读到尾，而不是当黑箱。
+- **[RepoWiki](https://github.com/he-yufeng/RepoWiki)** — 被丢进一个陌生代码库？它给你一份带「从哪读起」路径的 wiki，一个可自托管的 DeepWiki 替代。
+- **[AgentProbe](https://github.com/he-yufeng/AgentProbe)** — 抓住 LLM agent 行为悄悄变样的那一刻：给 agent 做快照测试，跑在 pytest 里。
+- **[agentcikit](https://github.com/he-yufeng/agentcikit)** — LLM agent 的 CI 安全层：回放运行、给工具调用上围栏、上线前分诊失败。
+
 ## License
 
 MIT

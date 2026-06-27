@@ -235,10 +235,12 @@ Issues and PRs welcome. `pytest tests/` should stay green.
 
 ## Related Projects
 
-- [**CodeJoust**](https://github.com/he-yufeng/CodeJoust) — LiteBench evaluates models on fixed benchmarks. CodeJoust evaluates **which coding agent CLI** solves *your own* bug best — it races Claude Code, aider, Codex, and Gemini in parallel git worktrees, auto-scores by tests/cost/diff/time, hands you the winner's patch. Sibling project, `pip install codejoust`.
-- [**CoreCoder**](https://github.com/he-yufeng/CoreCoder) — Claude Code's architecture distilled to ~1,400 lines of Python. Good for understanding how agents work under the hood.
-- [**AnyCoder**](https://github.com/he-yufeng/AnyCoder) — practical terminal AI coding agent with 100+ model support via litellm.
-- [**RepoWiki**](https://github.com/he-yufeng/RepoWiki) — `pip install repowiki` turns any repo into a wiki with dependency graph + architecture diagram + module pages.
+LiteBench is part of how I benchmark and watch LLM systems. A few related tools:
+
+- **[CoreCoder](https://github.com/he-yufeng/CoreCoder)** — want to understand how a coding agent really works? Read the whole ~1k-line engine end to end, not a black box.
+- **[RepoWiki](https://github.com/he-yufeng/RepoWiki)** — dropped into an unfamiliar codebase? It gives you a guided wiki and a where-to-start reading path, a self-hostable DeepWiki alternative.
+- **[AgentProbe](https://github.com/he-yufeng/AgentProbe)** — catch when your LLM agent silently changes behavior: snapshot tests for agents, run in pytest.
+- **[agentcikit](https://github.com/he-yufeng/agentcikit)** — the CI safety layer for LLM agents: replay runs, fence tool calls, and triage failures before they ship.
 
 ## License
 

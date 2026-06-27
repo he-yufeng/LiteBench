@@ -64,9 +64,7 @@ class CustomTask(Task):
                 if line:
                     raw.append(json.loads(line))
         else:
-            raise ValueError(
-                f"{self.path}: YAML must contain 'samples' or 'samples_jsonl'."
-            )
+            raise ValueError(f"{self.path}: YAML must contain 'samples' or 'samples_jsonl'.")
 
         samples: list[Sample] = []
         for i, row in enumerate(raw):
@@ -96,10 +94,14 @@ class CustomTask(Task):
         kind = self._scorer_kind
 
         if kind == "number":
-            return (1.0, True) if numbers_equal(extract_number(prediction), target) else (0.0, False)
+            return (
+                (1.0, True) if numbers_equal(extract_number(prediction), target) else (0.0, False)
+            )
 
         if kind == "mc":
-            return (1.0, True) if letters_equal(extract_letter(prediction), target) else (0.0, False)
+            return (
+                (1.0, True) if letters_equal(extract_letter(prediction), target) else (0.0, False)
+            )
 
         if kind == "regex":
             if not self._regex_pattern:

@@ -1,5 +1,6 @@
 from litebench.scorers.exec_code import extract_python_block, run_humaneval_test
 from litebench.scorers.extract_number import extract_number, numbers_equal
+from litebench.scorers.llm_judge import _parse_verdict
 from litebench.scorers.multiple_choice import extract_letter, letters_equal
 
 
@@ -102,3 +103,22 @@ class TestLettersEqual:
 
     def test_none_pred(self):
         assert letters_equal(None, "A") is False
+
+
+class TestParseVerdict:
+    def test_single_word(self):
+        assert _parse_verdict("YES") is True
+        assert _parse_verdict("NO") is False
+
+    def test_verdict_with_trailing_reasoning(self):
+        assert _parse_verdict("No, the answer is wrong.") is False
+        assert _parse_verdict("The phrasings differ but overall YES") is True
+
+    def test_takes_last_verdict_not_first(self):
+        # A judge that reasons before concluding must be read by its final
+        # verdict; matching the first yes/no would flip this grade.
+        assert _parse_verdict("Yes and no, but overall NO.") is False
+
+    def test_unparseable_grades_false(self):
+        assert _parse_verdict("") is False
+        assert _parse_verdict("maybe, hard to tell") is False

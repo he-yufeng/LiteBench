@@ -33,6 +33,18 @@ but not for substantive differences? Reply with a single word: YES or NO.
 _VERDICT = re.compile(r"\b(yes|no)\b", re.IGNORECASE)
 
 
+def _parse_verdict(text: str) -> bool:
+    """Read a yes/no verdict from a judge reply, taking the LAST match.
+
+    The grader is asked for a single word, but models sometimes reason before
+    concluding ("the phrasings differ but overall YES"). Matching the first
+    yes/no would read such a reply by an earlier mention and flip the grade, so
+    take the final verdict instead. Unparseable replies grade as False.
+    """
+    matches = _VERDICT.findall(text)
+    return bool(matches) and matches[-1].lower() == "yes"
+
+
 class LLMJudge:
     def __init__(
         self,
@@ -50,8 +62,4 @@ class LLMJudge:
             reference=reference,
         )
         result = await self.client.complete(prompt)
-        match = _VERDICT.search(result.text)
-        if match:
-            verdict = match.group(1).lower() == "yes"
-            return verdict, result.text.strip()
-        return False, result.text.strip()
+        return _parse_verdict(result.text), result.text.strip()

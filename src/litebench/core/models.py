@@ -41,6 +41,7 @@ class RunSummary(BaseModel):
     run_id: str
     task: str
     model: str
+    system_prompt: str | None
     n_samples: int
     n_correct: int
     accuracy: float

@@ -48,6 +48,7 @@ def list_cmd() -> None:
 @click.argument("task_name")
 @click.option("--model", "-m", required=True, help="Model id (e.g. gpt-5, deepseek/deepseek-chat, or shortcut: gpt-5/opus/kimi).")
 @click.option("--samples", "-n", default=20, type=int, help="Number of samples to run (default: 20).")
+@click.option("--repeat", default=1, type=int, help="Run each sample N times and report pass@1 / pass@N (default: 1 = off).")
 @click.option("--concurrency", "-c", default=8, type=int, help="Parallel requests (default: 8).")
 @click.option("--temperature", "-t", default=0.0, type=float, help="Sampling temperature (default: 0.0).")
 @click.option("--max-tokens", default=1024, type=int, help="Max completion tokens (default: 1024).")
@@ -60,6 +61,7 @@ def run(
     task_name: str,
     model: str,
     samples: int,
+    repeat: int,
     concurrency: int,
     temperature: float,
     max_tokens: int,
@@ -75,6 +77,8 @@ def run(
     or a path to a YAML file describing a custom task.
     """
     ensure_dirs()
+    if repeat < 1:
+        raise click.UsageError("--repeat must be at least 1")
     resolved = resolve_model(model)
 
     task_path = Path(task_name)
@@ -122,7 +126,7 @@ def run(
                     correct += 1
                 progress.update(pid, completed=done, acc=f"{correct / done * 100:.1f}%")
 
-            runner = Runner(task=task, client=client, concurrency=concurrency, on_progress=on_progress)
+            runner = Runner(task=task, client=client, concurrency=concurrency, on_progress=on_progress, samples_per_task=repeat)
             summary, results = await runner.run(sample_list)
 
         if not no_save:

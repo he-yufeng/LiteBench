@@ -9,6 +9,7 @@ from typing import Any
 
 from litebench.agent.base import AgentTask, AgentTrace, Tool, ToolCall
 from litebench.core.models import RunSummary, Sample, SampleResult
+from litebench.core.passk import mean_pass_at_k
 from litebench.llm.client import LLMClient
 from litebench.tasks.base import Task
 
@@ -20,18 +21,27 @@ class Runner:
         client: LLMClient,
         concurrency: int = 8,
         on_progress=None,
+        samples_per_task: int = 1,
+        pass_k: int | None = None,
     ):
         self.task = task
         self.client = client
         self.concurrency = concurrency
         self.on_progress = on_progress
+        if samples_per_task < 1:
+            raise ValueError("samples_per_task must be >= 1")
+        if pass_k is not None and pass_k < 1:
+            raise ValueError("pass_k must be >= 1")
+        self.samples_per_task = samples_per_task
+        # Default to pass@n: "at least one of all n attempts correct" per task.
+        self.pass_k = pass_k if pass_k is not None else samples_per_task
 
     async def run(self, samples: list[Sample]) -> tuple[RunSummary, list[SampleResult]]:
         started_at = datetime.now()
         sem = asyncio.Semaphore(self.concurrency)
         results: list[SampleResult] = []
         done = 0
-        total = len(samples)
+        total = len(samples) * self.samples_per_task
         lock = asyncio.Lock()
 
         async def run_one(sample: Sample) -> SampleResult:
@@ -47,7 +57,12 @@ class Runner:
                     self.on_progress(done, total, res)
             return res
 
-        tasks = [asyncio.create_task(track(s)) for s in samples]
+        work = (
+            [s.model_copy(update={"id": f"{s.id}#{i}"}) for i in range(self.samples_per_task) for s in samples]
+            if self.samples_per_task > 1
+            else list(samples)
+        )
+        tasks = [asyncio.create_task(track(s)) for s in work]
         for coro in asyncio.as_completed(tasks):
             results.append(await coro)
 
@@ -59,6 +74,17 @@ class Runner:
         mean_latency = sum(r.latency_ms for r in results) / total if total else 0.0
         total_prompt = sum(r.prompt_tokens for r in results)
         total_completion = sum(r.completion_tokens for r in results)
+
+        pass_at_1: float | None = None
+        pass_at_k: float | None = None
+        if self.samples_per_task > 1 and results:
+            per_task: dict[str, int] = {}
+            for r in results:
+                base_id = r.sample_id.rsplit("#", 1)[0]
+                per_task[base_id] = per_task.get(base_id, 0) + (1 if r.correct else 0)
+            corrects = list(per_task.values())
+            pass_at_1 = mean_pass_at_k(corrects, self.samples_per_task, 1)
+            pass_at_k = mean_pass_at_k(corrects, self.samples_per_task, self.pass_k)
 
         summary = RunSummary(
             run_id=str(uuid.uuid4()),
@@ -72,6 +98,10 @@ class Runner:
             total_completion_tokens=total_completion,
             started_at=started_at,
             finished_at=finished_at,
+            samples_per_task=self.samples_per_task,
+            pass_k=self.pass_k if self.samples_per_task > 1 else None,
+            pass_at_1=pass_at_1,
+            pass_at_k=pass_at_k,
             config={
                 "temperature": self.client.temperature,
                 "max_tokens": self.client.max_tokens,

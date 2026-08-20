@@ -16,7 +16,11 @@ class Sample(BaseModel):
 
 
 class SampleResult(BaseModel):
-    """Outcome of running a single sample through the model."""
+    """Outcome of running a single sample through the model.
+
+    When a run repeats each task (``--samples N``), the stored sample_id carries
+    the repeat as ``<id>#<i>`` so history rows stay distinct.
+    """
 
     sample_id: str
     input: str
@@ -48,5 +52,9 @@ class RunSummary(BaseModel):
     total_prompt_tokens: int
     total_completion_tokens: int
     started_at: datetime
+    samples_per_task: int = 1
+    pass_k: int | None = None
+    pass_at_1: float | None = None
+    pass_at_k: float | None = None
     finished_at: datetime
     config: dict[str, Any] = Field(default_factory=dict)

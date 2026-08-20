@@ -31,6 +31,7 @@ litebench list
 litebench run gsm8k -m deepseek/deepseek-chat -n 50
 litebench run humaneval -m gpt-5 -n 20
 litebench run mmlu -m claude-sonnet-4-6 --subject computer_security -n 100
+litebench run gsm8k -m gpt-5 -n 20 --repeat 5   # 5 attempts per task, reports pass@1 / pass@5
 litebench run math -m kimi -n 50
 
 # Custom YAML tasks
@@ -220,11 +221,10 @@ Pure single-file HTML + vanilla JS — no React, no build step, works offline.
 
 ## Roadmap
 
-**Shipped:** the CLI, six built-in benchmarks (HumanEval, GSM8K, MMLU, MATH-500, plus YAML-defined custom tasks), an LLM-as-judge mode, agent/tool-use evaluation via litellm function calling, a SQLite run history, and a `litebench serve` web dashboard — all under a regression suite that stays green.
+**Shipped:** a pass@k sampler (`--repeat N` reports pass@1 / pass@N with the unbiased estimator), the CLI, six built-in benchmarks (HumanEval, GSM8K, MMLU, MATH-500, plus YAML-defined custom tasks), an LLM-as-judge mode, agent/tool-use evaluation via litellm function calling, a SQLite run history, and a `litebench serve` web dashboard — all under a regression suite that stays green.
 
 **Planned:**
 
-- **A pass@k sampler** — run each task n times and report pass@1 / pass@k, so a model's reliability is visible, not just whether one sample happened to pass.
 - **Resumable runs** — checkpoint partway through a long benchmark and continue, instead of paying for the whole sweep again after an interruption.
 - **More built-in tasks** — a code-repair task and a tool-use task from real traces, since the runner already supports both shapes and only the curated dataset is missing.
 - **Cost-aware comparison** — sort the leaderboard by accuracy-per-dollar, not just accuracy, using the token data each run already records.

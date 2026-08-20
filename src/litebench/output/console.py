@@ -18,6 +18,11 @@ def print_summary(summary: RunSummary) -> None:
         f"[bold green]{summary.accuracy * 100:.1f}%[/]  "
         f"({summary.n_correct}/{summary.n_samples})",
     )
+    if summary.pass_at_k is not None and summary.pass_k is not None:
+        table.add_row(
+            f"pass@1 / pass@{summary.pass_k}",
+            f"{(summary.pass_at_1 or 0.0) * 100:.1f}%  /  [bold green]{summary.pass_at_k * 100:.1f}%[/]",
+        )
     table.add_row("Mean latency", f"{summary.mean_latency_ms:.0f} ms")
     table.add_row(
         "Tokens",

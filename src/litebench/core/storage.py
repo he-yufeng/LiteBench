@@ -43,6 +43,25 @@ CREATE TABLE IF NOT EXISTS samples (
 
 CREATE INDEX IF NOT EXISTS idx_runs_task_model ON runs(task, model);
 CREATE INDEX IF NOT EXISTS idx_runs_finished_at ON runs(finished_at);
+
+CREATE TABLE IF NOT EXISTS checkpoint_runs (
+    run_id TEXT PRIMARY KEY,
+    task TEXT NOT NULL,
+    model TEXT NOT NULL,
+    config TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    total_samples INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'running'
+);
+
+CREATE TABLE IF NOT EXISTS checkpoint_results (
+    run_id TEXT NOT NULL,
+    sample_id TEXT NOT NULL,
+    result TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (run_id, sample_id),
+    FOREIGN KEY (run_id) REFERENCES checkpoint_runs(run_id)
+);
 """
 
 
@@ -133,6 +152,96 @@ class Storage:
             cursor = await db.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,))
             row = await cursor.fetchone()
         return self._row_to_summary(row) if row else None
+
+    async def start_checkpoint(
+        self,
+        run_id: str,
+        task: str,
+        model: str,
+        config: dict,
+        started_at: datetime,
+        total_samples: int,
+    ) -> None:
+        """Register a resumable run before its first sample goes out."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """INSERT OR REPLACE INTO checkpoint_runs
+                (run_id, task, model, config, started_at, total_samples, status)
+                VALUES (?, ?, ?, ?, ?, ?, 'running')""",
+                (run_id, task, model, json.dumps(config), started_at.isoformat(), total_samples),
+            )
+            await db.commit()
+
+    async def save_checkpoint_result(self, run_id: str, result: SampleResult) -> None:
+        """Persist one finished sample immediately, so an interruption only
+        ever costs the in-flight samples."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """INSERT OR REPLACE INTO checkpoint_results (run_id, sample_id, result, created_at)
+                VALUES (?, ?, ?, ?)""",
+                (
+                    run_id,
+                    result.sample_id,
+                    result.model_dump_json(),
+                    datetime.now().isoformat(),
+                ),
+            )
+            await db.commit()
+
+    async def list_checkpoint_results(self, run_id: str) -> list[SampleResult]:
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "SELECT result FROM checkpoint_results WHERE run_id = ? ORDER BY sample_id",
+                (run_id,),
+            )
+            rows = await cursor.fetchall()
+        return [SampleResult.model_validate_json(r[0]) for r in rows]
+
+    async def find_interrupted_checkpoint(self, task: str, model: str) -> dict | None:
+        """Newest unfinished checkpoint for this task+model, if one exists."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                """SELECT run_id, config, started_at, total_samples FROM checkpoint_runs
+                WHERE task = ? AND model = ? AND status = 'running'
+                ORDER BY started_at DESC LIMIT 1""",
+                (task, model),
+            )
+            row = await cursor.fetchone()
+        if row is None:
+            return None
+        return {
+            "run_id": row["run_id"],
+            "config": json.loads(row["config"]),
+            "started_at": datetime.fromisoformat(row["started_at"]),
+            "total_samples": row["total_samples"],
+        }
+
+    async def get_checkpoint(self, run_id: str) -> dict | None:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                """SELECT run_id, config, started_at, total_samples, status
+                FROM checkpoint_runs WHERE run_id = ?""",
+                (run_id,),
+            )
+            row = await cursor.fetchone()
+        if row is None or row["status"] != "running":
+            return None
+        return {
+            "run_id": row["run_id"],
+            "config": json.loads(row["config"]),
+            "started_at": datetime.fromisoformat(row["started_at"]),
+            "total_samples": row["total_samples"],
+        }
+
+    async def complete_checkpoint(self, run_id: str) -> None:
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "UPDATE checkpoint_runs SET status = 'completed' WHERE run_id = ?",
+                (run_id,),
+            )
+            await db.commit()
 
     async def list_samples(self, run_id: str) -> list[SampleResult]:
         async with aiosqlite.connect(self.db_path) as db:

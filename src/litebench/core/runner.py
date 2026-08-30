@@ -23,6 +23,11 @@ class Runner:
         on_progress=None,
         samples_per_task: int = 1,
         pass_k: int | None = None,
+        prior_results: list[SampleResult] | None = None,
+        skip_ids: set[str] | None = None,
+        checkpoint_sink=None,
+        run_id: str | None = None,
+        started_at: datetime | None = None,
     ):
         self.task = task
         self.client = client
@@ -35,12 +40,22 @@ class Runner:
         self.samples_per_task = samples_per_task
         # Default to pass@n: "at least one of all n attempts correct" per task.
         self.pass_k = pass_k if pass_k is not None else samples_per_task
+        # Resume support: prior results are folded into the aggregate, skip_ids
+        # keeps finished samples out of the work list, checkpoint_sink persists
+        # each new result as it lands.
+        self.prior_results = prior_results or []
+        self.skip_ids = skip_ids or set()
+        self.checkpoint_sink = checkpoint_sink
+        self.run_id = run_id
+        self.started_at = started_at
 
     async def run(self, samples: list[Sample]) -> tuple[RunSummary, list[SampleResult]]:
-        started_at = datetime.now()
+        started_at = self.started_at or datetime.now()
         sem = asyncio.Semaphore(self.concurrency)
         results: list[SampleResult] = []
-        done = 0
+        # Progress counts the prior results too, so a resumed run shows the
+        # true position from the first tick.
+        done = len(self.prior_results)
         total = len(samples) * self.samples_per_task
         lock = asyncio.Lock()
 
@@ -53,6 +68,10 @@ class Runner:
             res = await run_one(sample)
             async with lock:
                 done += 1
+                if self.checkpoint_sink:
+                    sunk = self.checkpoint_sink(res)
+                    if inspect.isawaitable(sunk):
+                        await sunk
                 if self.on_progress:
                     self.on_progress(done, total, res)
             return res
@@ -62,11 +81,14 @@ class Runner:
             if self.samples_per_task > 1
             else list(samples)
         )
+        if self.skip_ids:
+            work = [s for s in work if s.id not in self.skip_ids]
         tasks = [asyncio.create_task(track(s)) for s in work]
         for coro in asyncio.as_completed(tasks):
             results.append(await coro)
 
         finished_at = datetime.now()
+        results = self.prior_results + results
         results.sort(key=lambda r: r.sample_id)
 
         n_correct = sum(1 for r in results if r.correct)
@@ -87,7 +109,7 @@ class Runner:
             pass_at_k = mean_pass_at_k(corrects, self.samples_per_task, self.pass_k)
 
         summary = RunSummary(
-            run_id=str(uuid.uuid4()),
+            run_id=self.run_id or str(uuid.uuid4()),
             task=self.task.name,
             model=self.client.model,
             n_samples=total,

@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import json as jsonlib
 import sys
+import uuid
+from datetime import datetime
 from pathlib import Path
 
 import click
@@ -57,6 +59,15 @@ def list_cmd() -> None:
 @click.option("--split", default="test", help="Dataset split (default: test).")
 @click.option("--json-out", type=click.Path(path_type=Path), default=None, help="Write per-sample JSON to this path.")
 @click.option("--no-save", is_flag=True, help="Don't persist the run to the local DB.")
+@click.option(
+    "--resume",
+    "resume_id",
+    required=False,
+    default=None,
+    flag_value="__latest__",
+    is_flag=False,
+    help="Resume an interrupted run: --resume for the latest one on this task+model, or --resume RUN_ID.",
+)
 def run(
     task_name: str,
     model: str,
@@ -70,6 +81,7 @@ def run(
     split: str,
     json_out: Path | None,
     no_save: bool,
+    resume_id: str | None,
 ) -> None:
     """Run a benchmark. Example: litebench run gsm8k -m deepseek/deepseek-chat -n 50
 
@@ -109,6 +121,52 @@ def run(
     )
 
     async def _go():
+        storage = Storage(DB_PATH)
+        await storage.init()
+
+        resume_state = None
+        if resume_id is not None:
+            if resume_id == "__latest__":
+                resume_state = await storage.find_interrupted_checkpoint(task.name, resolved)
+                if resume_state is None:
+                    console.print(f"[red]No interrupted run to resume for {task.name} on {resolved}.[/]")
+                    sys.exit(1)
+            else:
+                resume_state = await storage.get_checkpoint(resume_id)
+                if resume_state is None:
+                    console.print(f"[red]No resumable checkpoint with run_id {resume_id}.[/]")
+                    sys.exit(1)
+
+        prior_results = []
+        run_id = str(uuid.uuid4())
+        started_at = None
+        if resume_state is not None:
+            run_id = resume_state["run_id"]
+            started_at = resume_state["started_at"]
+            prior_results = await storage.list_checkpoint_results(run_id)
+            console.print(
+                f"Resuming [cyan]{run_id[:8]}[/]: {len(prior_results)}/{resume_state['total_samples']} samples already done."
+            )
+        else:
+            await storage.start_checkpoint(
+                run_id,
+                task.name,
+                resolved,
+                {
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                    "concurrency": concurrency,
+                    "repeat": repeat,
+                    "samples": samples,
+                    "split": split,
+                },
+                datetime.now(),
+                len(sample_list) * repeat,
+            )
+
+        async def checkpoint_sink(result) -> None:
+            await storage.save_checkpoint_result(run_id, result)
+
         with Progress(
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
@@ -117,8 +175,8 @@ def run(
             TimeElapsedColumn(),
             console=console,
         ) as progress:
-            pid = progress.add_task("Running", total=len(sample_list), acc="—")
-            correct = 0
+            pid = progress.add_task("Running", total=len(sample_list) * repeat, acc="—")
+            correct = sum(1 for r in prior_results if r.correct)
 
             def on_progress(done: int, total: int, result):
                 nonlocal correct
@@ -126,12 +184,22 @@ def run(
                     correct += 1
                 progress.update(pid, completed=done, acc=f"{correct / done * 100:.1f}%")
 
-            runner = Runner(task=task, client=client, concurrency=concurrency, on_progress=on_progress, samples_per_task=repeat)
+            runner = Runner(
+                task=task,
+                client=client,
+                concurrency=concurrency,
+                on_progress=on_progress,
+                samples_per_task=repeat,
+                prior_results=prior_results,
+                skip_ids={r.sample_id for r in prior_results},
+                checkpoint_sink=checkpoint_sink,
+                run_id=run_id,
+                started_at=started_at,
+            )
             summary, results = await runner.run(sample_list)
 
+        await storage.complete_checkpoint(run_id)
         if not no_save:
-            storage = Storage(DB_PATH)
-            await storage.init()
             await storage.save_run(summary, results)
 
         print_summary(summary)

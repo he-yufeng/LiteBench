@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "litebench"
-version = "0.3.1"
+version = "0.3.2"
 description = "A pip-installable benchmark runner for LLMs and agents. 5 minutes to your first eval."
 readme = "README.md"
 license = { text = "MIT" }
